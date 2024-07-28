@@ -1,47 +1,60 @@
 package com.example.dispositivomobil
 
+import android.app.Activity
 import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.dispositivomobil.ui.theme.DispositivoMobilTheme
+import android.widget.*
+import android.widget.Toast
 
-class MainActivity : ComponentActivity() {
+class MainActivity : Activity() {
+
+    private val notesList = mutableListOf<Note>()
+    private lateinit var adapter: ArrayAdapter<String>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            DispositivoMobilTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+        setContentView(R.layout.main)
+
+        val editTextTitle = findViewById<EditText>(R.id.editTextTitle)
+        val editTextDescription = findViewById<EditText>(R.id.editTextDescription)
+        val buttonSave = findViewById<Button>(R.id.buttonSave)
+        val listViewNotes = findViewById<ListView>(R.id.listViewNotes)
+
+        adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_list_item_1,
+            mutableListOf<String>()
+        )
+        listViewNotes.adapter = adapter
+
+        buttonSave.setOnClickListener {
+            val title = editTextTitle.text.toString()
+            val description = editTextDescription.text.toString()
+
+            if (title.isNotEmpty() && description.isNotEmpty()) {
+                val note = Note(
+                    title = title,
+                    description = description
+                )
+                notesList.add(note)
+                updateListView()
+                editTextTitle.text.clear()
+                editTextDescription.text.clear()
+                Toast.makeText(this, "Nota guardada", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Nota no guardada.Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
             }
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    DispositivoMobilTheme {
-        Greeting("Android")
+    private fun updateListView() {
+        val noteStrings = notesList.map { "${it.title}: ${it.description}" }
+        adapter.clear()
+        adapter.addAll(noteStrings)
+        adapter.notifyDataSetChanged()
     }
 }
+
+data class Note(
+    val title: String,
+    val description: String
+)
