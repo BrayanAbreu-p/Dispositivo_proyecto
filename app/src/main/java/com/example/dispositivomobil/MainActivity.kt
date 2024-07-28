@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.dispositivomobil.components.EditNoteDialog
 import com.example.dispositivomobil.components.NoteItem
@@ -21,8 +20,7 @@ import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
 
-    private val notesList = mutableListOf<Note>()
-
+    private val notesList = mutableStateListOf<Note>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -32,7 +30,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
         loadNotes()
     }
 
@@ -43,7 +40,6 @@ class MainActivity : ComponentActivity() {
         var showEditDialog by remember { mutableStateOf(false) }
         var noteToEdit by remember { mutableStateOf<Note?>(null) }
         val notes by remember { mutableStateOf(notesList.toList()) }
-        val context = LocalContext.current // Correct usage of LocalContext
 
         Column(modifier = Modifier.padding(16.dp)) {
             TextField(
@@ -70,9 +66,9 @@ class MainActivity : ComponentActivity() {
                     saveNotes()
                     title = ""
                     description = ""
-                    Toast.makeText(context, "Nota guardada", Toast.LENGTH_SHORT).show() // Correct usage of Toast
+                    Toast.makeText(this@MainActivity, "Nota guardada", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(context, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show() // Correct usage of Toast
+                    Toast.makeText(this@MainActivity, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
                 }
             }) {
                 Text("Save Note")
@@ -90,7 +86,6 @@ class MainActivity : ComponentActivity() {
                 }
             )
 
-            // Mostrar el cuadro de diálogo de edición si se ha seleccionado una nota para editar
             noteToEdit?.let { note ->
                 if (showEditDialog) {
                     EditNoteDialog(
