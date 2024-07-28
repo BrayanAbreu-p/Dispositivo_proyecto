@@ -10,8 +10,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import com.example.dispositivomobil.components.EditNoteDialog
+import com.example.dispositivomobil.components.NoteItem
+import com.example.dispositivomobil.models.Note
 import com.example.dispositivomobil.ui.theme.DispositivoMobilTheme
 import org.json.JSONArray
 import org.json.JSONObject
@@ -40,7 +43,7 @@ class MainActivity : ComponentActivity() {
         var showEditDialog by remember { mutableStateOf(false) }
         var noteToEdit by remember { mutableStateOf<Note?>(null) }
         val notes by remember { mutableStateOf(notesList.toList()) }
-        val context = LocalContext.current
+        val context = LocalContext.current // Correct usage of LocalContext
 
         Column(modifier = Modifier.padding(16.dp)) {
             TextField(
@@ -67,9 +70,9 @@ class MainActivity : ComponentActivity() {
                     saveNotes()
                     title = ""
                     description = ""
-                    Toast.makeText(context, "Nota guardada", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Nota guardada", Toast.LENGTH_SHORT).show() // Correct usage of Toast
                 } else {
-                    Toast.makeText(context, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show() // Correct usage of Toast
                 }
             }) {
                 Text("Save Note")
@@ -121,75 +124,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    fun NoteItem(note: Note, onEdit: () -> Unit, onDelete: () -> Unit) {
-        Card(modifier = Modifier.padding(8.dp), elevation = CardDefaults.cardElevation(4.dp)) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(text = note.title, style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(text = note.description)
-                Spacer(modifier = Modifier.height(8.dp))
-                Row {
-                    Button(onClick = onEdit) {
-                        Text("Edit")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = onDelete) {
-                        Text("Delete")
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun EditNoteDialog(
-        note: Note,
-        onNoteUpdated: (Note) -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        var newTitle by remember { mutableStateOf(note.title) }
-        var newDescription by remember { mutableStateOf(note.description) }
-        val context = LocalContext.current
-
-        AlertDialog(
-            onDismissRequest = { onDismiss() },
-            title = { Text("Edit Note") },
-            text = {
-                Column {
-                    TextField(
-                        value = newTitle,
-                        onValueChange = { newTitle = it },
-                        label = { Text("Title") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(
-                        value = newDescription,
-                        onValueChange = { newDescription = it },
-                        label = { Text("Description") }
-                    )
-                }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    if (newTitle.isNotEmpty() && newDescription.isNotEmpty()) {
-                        onNoteUpdated(Note(newTitle, newDescription))
-                        Toast.makeText(context, "Nota actualizada", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
-                    }
-                }) {
-                    Text("Save")
-                }
-            },
-            dismissButton = {
-                Button(onClick = onDismiss) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
     private fun saveNotes() {
         val sharedPreferences = getSharedPreferences("notes_prefs", MODE_PRIVATE)
         val editor = sharedPreferences.edit()
@@ -220,8 +154,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-data class Note(
-    val title: String,
-    val description: String
-)
