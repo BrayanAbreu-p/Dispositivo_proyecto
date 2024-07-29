@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.dispositivomobil.components.EditNoteDialog
 import com.example.dispositivomobil.components.NoteItem
@@ -21,6 +22,7 @@ import org.json.JSONObject
 class MainActivity : ComponentActivity() {
 
     private val notesList = mutableStateListOf<Note>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -30,6 +32,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
         loadNotes()
     }
 
@@ -39,7 +42,8 @@ class MainActivity : ComponentActivity() {
         var description by remember { mutableStateOf("") }
         var showEditDialog by remember { mutableStateOf(false) }
         var noteToEdit by remember { mutableStateOf<Note?>(null) }
-        val notes by remember { mutableStateOf(notesList.toList()) }
+        var errorMessage by remember { mutableStateOf<String?>(null) }
+        val context = LocalContext.current
 
         Column(modifier = Modifier.padding(16.dp)) {
             TextField(
@@ -57,50 +61,71 @@ class MainActivity : ComponentActivity() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = {
-                if (title.isNotEmpty() && description.isNotEmpty()) {
-                    val note = Note(
-                        title = title,
-                        description = description
-                    )
-                    notesList.add(note)
-                    saveNotes()
-                    title = ""
-                    description = ""
-                    Toast.makeText(this@MainActivity, "Nota guardada", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@MainActivity, "Por favor, complete todos los campos", Toast.LENGTH_SHORT).show()
+                try {
+                    if (title.isNotEmpty() && description.isNotEmpty()) {
+                        val note = Note(
+                            title = title,
+                            description = description
+                        )
+                        notesList.add(note)
+                        saveNotes()
+                        title = ""
+                        description = ""
+                        errorMessage = null
+                        Toast.makeText(context, "Nota guardada", Toast.LENGTH_SHORT).show()
+                    } else {
+                        errorMessage = "Por favor, complete todos los campos"
+                    }
+                } catch (e: Exception) {
+                    errorMessage = "Error al guardar la nota: ${e.message}"
                 }
             }) {
                 Text("Save Note")
             }
             Spacer(modifier = Modifier.height(16.dp))
             NotesList(
-                notes = notes,
+                notes = notesList,
                 onEditNote = { index ->
-                    noteToEdit = notes[index]
+                    noteToEdit = notesList[index]
                     showEditDialog = true
                 },
                 onDeleteNote = { index ->
-                    notesList.removeAt(index)
-                    saveNotes()
+                    try {
+                        notesList.removeAt(index)
+                        saveNotes()
+                        errorMessage = null
+                    } catch (e: Exception) {
+                        errorMessage = "Error al eliminar la nota: ${e.message}"
+                    }
                 }
             )
 
+            // Mostrar el cuadro de diálogo de edición si se ha seleccionado una nota para editar
             noteToEdit?.let { note ->
                 if (showEditDialog) {
                     EditNoteDialog(
                         note = note,
                         onNoteUpdated = { updatedNote ->
-                            val index = notes.indexOf(note)
-                            notesList[index] = updatedNote
-                            saveNotes()
-                            showEditDialog = false
+                            try {
+                                val index = notesList.indexOf(note)
+                                notesList[index] = updatedNote
+                                saveNotes()
+                                showEditDialog = false
+                                errorMessage = null
+                            } catch (e: Exception) {
+                                errorMessage = "Error al actualizar la nota: ${e.message}"
+                            }
                         },
                         onDismiss = {
                             showEditDialog = false
                         }
                     )
                 }
+            }
+
+            // Mostrar mensaje de error si existe
+            errorMessage?.let {
+                Text(text = it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -120,32 +145,40 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveNotes() {
-        val sharedPreferences = getSharedPreferences("notes_prefs", MODE_PRIVATE)
-        val editor = sharedPreferences.edit()
+        try {
+            val sharedPreferences = getSharedPreferences("notes_prefs", MODE_PRIVATE)
+            val editor = sharedPreferences.edit()
 
-        val jsonArray = JSONArray()
-        for (note in notesList) {
-            val jsonObject = JSONObject()
-            jsonObject.put("title", note.title)
-            jsonObject.put("description", note.description)
-            jsonArray.put(jsonObject)
+            val jsonArray = JSONArray()
+            for (note in notesList) {
+                val jsonObject = JSONObject()
+                jsonObject.put("title", note.title)
+                jsonObject.put("description", note.description)
+                jsonArray.put(jsonObject)
+            }
+
+            editor.putString("notes", jsonArray.toString())
+            editor.apply()
+        } catch (e: Exception) {
+            // Log error or handle accordingly
         }
-
-        editor.putString("notes", jsonArray.toString())
-        editor.apply()
     }
 
     private fun loadNotes() {
-        val sharedPreferences = getSharedPreferences("notes_prefs", MODE_PRIVATE)
-        val notesJson = sharedPreferences.getString("notes", "[]")
+        try {
+            val sharedPreferences = getSharedPreferences("notes_prefs", MODE_PRIVATE)
+            val notesJson = sharedPreferences.getString("notes", "[]")
 
-        val jsonArray = JSONArray(notesJson)
-        notesList.clear()
-        for (i in 0 until jsonArray.length()) {
-            val jsonObject = jsonArray.getJSONObject(i)
-            val title = jsonObject.getString("title")
-            val description = jsonObject.getString("description")
-            notesList.add(Note(title, description))
+            val jsonArray = JSONArray(notesJson)
+            notesList.clear()
+            for (i in 0 until jsonArray.length()) {
+                val jsonObject = jsonArray.getJSONObject(i)
+                val title = jsonObject.getString("title")
+                val description = jsonObject.getString("description")
+                notesList.add(Note(title, description))
+            }
+        } catch (e: Exception) {
+            // Log error or handle accordingly
         }
     }
 }
