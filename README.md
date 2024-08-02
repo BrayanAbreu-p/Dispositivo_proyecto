@@ -1,6 +1,6 @@
-# Dispositivo Mobil
+# Dispositivo Movil
 
-Dispositivo Mobil es una aplicación de notas para Android construida con Jetpack Compose. La aplicación permite a los usuarios crear, editar y eliminar notas, y almacena los datos localmente utilizando `SharedPreferences`.
+Dispositivo Movil es una aplicación de notas para Android construida con Jetpack Compose. La aplicación permite a los usuarios crear, editar y eliminar notas, y almacena los datos localmente utilizando `SharedPreferences`.
 
 ## Características
 
